@@ -1,0 +1,2123 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 外部通信・外部リソース読み込みを完全に遮断する厳格なCSP -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+<title>EPSON PX-M887F「スキャン to メール」設定マニュアル</title>
+<style>
+  /* ==========================================================================
+     1. Design Tokens
+        Default: Light Mode (清潔感のある白とスレート、落ち着いたブルー)
+        Optional: Dark Mode (ヘッダー右上から切替可能・ストレージ保存なし)
+     ========================================================================== */
+  :root,
+  [data-theme="light"] {
+    --bg-canvas: #ffffff;
+    --bg-sidebar: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-surface-subtle: #f8fafc;
+    --bg-input: #ffffff;
+
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+
+    --accent: #1d4ed8;
+    --accent-hover: #1e40af;
+    --accent-soft: #eff6ff;
+    --accent-border: #bfdbfe;
+    --accent-ink: #ffffff;
+
+    --ok-bg: #f0fdf4;
+    --ok-border: #bbf7d0;
+    --ok-accent: #16a34a;
+    --ok-text: #166534;
+
+    --warn-bg: #fffbeb;
+    --warn-border: #fde68a;
+    --warn-accent: #d97706;
+    --warn-text: #92400e;
+
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --danger-text: #b91c1c;
+
+    --ui-chip-bg: #f1f5f9;
+    --ui-chip-border: #cbd5e1;
+    --ui-chip-text: #0f172a;
+
+    --sidebar-w: 272px;
+    --header-h: 64px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-drawer: -12px 0 36px rgba(15, 23, 42, 0.12);
+
+    --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg-canvas: #0f172a;
+    --bg-sidebar: #111c30;
+    --bg-surface: #162238;
+    --bg-surface-subtle: #1e293b;
+    --bg-input: #0b1220;
+
+    --border-subtle: #263449;
+    --border-strong: #3b4f6b;
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --accent: #60a5fa;
+    --accent-hover: #93c5fd;
+    --accent-soft: rgba(96, 165, 250, 0.14);
+    --accent-border: rgba(96, 165, 250, 0.35);
+    --accent-ink: #0b1220;
+
+    --ok-bg: rgba(34, 197, 94, 0.10);
+    --ok-border: rgba(34, 197, 94, 0.35);
+    --ok-accent: #4ade80;
+    --ok-text: #86efac;
+
+    --warn-bg: rgba(245, 158, 11, 0.12);
+    --warn-border: rgba(245, 158, 11, 0.38);
+    --warn-accent: #fbbf24;
+    --warn-text: #fde68a;
+
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --danger-border: rgba(239, 68, 68, 0.40);
+    --danger-text: #fca5a5;
+
+    --ui-chip-bg: #1e293b;
+    --ui-chip-border: #334155;
+    --ui-chip-text: #f1f5f9;
+
+    --shadow-card: none;
+    --shadow-drawer: -12px 0 40px rgba(0, 0, 0, 0.50);
+  }
+
+  /* ==========================================================================
+     2. Base Reset & Readable Typography
+     ========================================================================== */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-h) + 28px);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.85;
+    text-align: left;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    padding: 2px 7px;
+    border-radius: 6px;
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+
+  /* ==========================================================================
+     3. Fixed Top Header
+     ========================================================================== */
+  .app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-h);
+    background-color: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 40;
+    gap: 16px;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .brand-tag {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  .brand-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background-color: var(--bg-surface-subtle);
+    border-color: var(--border-strong);
+  }
+
+  .btn:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .btn-accent {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .btn-accent:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
+
+  .btn-sm {
+    font-size: 12.5px;
+    padding: 6px 11px;
+  }
+
+  .btn-copied {
+    background-color: var(--ok-bg) !important;
+    border-color: var(--ok-border) !important;
+    color: var(--ok-text) !important;
+  }
+
+  .btn-danger {
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+  }
+
+  .btn-danger:hover {
+    opacity: 0.9;
+  }
+
+  /* ==========================================================================
+     4. Two-Column Layout: Left Map (272px) + Right Document (max 740px)
+     ========================================================================== */
+  .layout-shell {
+    padding-top: var(--header-h);
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-subtle);
+    overflow-y: auto;
+    padding: 28px 18px 40px 18px;
+    z-index: 30;
+  }
+
+  .mobile-nav-toggle {
+    display: none;
+  }
+
+  /* Progress Card */
+  .progress-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+
+  .progress-count {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .progress-count.is-all-done {
+    color: var(--ok-accent);
+  }
+
+  .progress-bar-track {
+    height: 7px;
+    width: 100%;
+    background-color: var(--bg-surface-subtle);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--ok-accent);
+    transition: width 0.25s ease;
+  }
+
+  /* Navigation List */
+  .nav-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    padding: 0 10px;
+    margin: 20px 0 8px 0;
+    text-transform: uppercase;
+  }
+
+  .nav-group-label:first-of-type {
+    margin-top: 0;
+  }
+
+  .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .nav-item:hover {
+    background-color: var(--bg-surface);
+  }
+
+  .nav-item.is-active {
+    background-color: var(--accent-soft);
+    border-left-color: var(--accent);
+  }
+
+  .nav-item.is-active .nav-link {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .nav-check {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--ok-accent);
+    cursor: pointer;
+  }
+
+  .nav-link {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    text-decoration: none !important;
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+
+  .nav-item.is-checked .nav-link {
+    color: var(--text-muted);
+  }
+
+  .nav-num {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .nav-item.is-active .nav-num {
+    color: var(--accent);
+  }
+
+  /* ==========================================================================
+     5. Right Main Document Area (Generous Whitespace & Clear Hierarchy)
+     ========================================================================== */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    padding: 52px 48px 120px 48px;
+  }
+
+  .doc-container {
+    max-width: 740px;
+    margin: 0 auto;
+  }
+
+  /* Hero Header */
+  .doc-hero {
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 48px;
+  }
+
+  .doc-eyebrow {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  .doc-hero h1 {
+    margin: 0 0 18px 0;
+    font-size: 28px;
+    line-height: 1.4;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+  }
+
+  .doc-lead {
+    margin: 0 0 22px 0;
+    font-size: 15.5px;
+    line-height: 1.9;
+    color: var(--text-secondary);
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .meta-pill {
+    background-color: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+
+  /* Major Section Spacing */
+  .major-section {
+    margin-bottom: 56px;
+  }
+
+  .major-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .major-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-subtle);
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+
+  .major-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .section-intro {
+    margin: 0 0 22px 0;
+    color: var(--text-secondary);
+  }
+
+  /* Content & Step Cards */
+  .doc-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 30px 32px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.2s ease;
+  }
+
+  .doc-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .doc-card.is-done {
+    border-color: var(--ok-border);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .card-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .step-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 3px 11px;
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+
+  .doc-card.is-done .step-badge {
+    background-color: var(--ok-bg);
+    color: var(--ok-text);
+    border-color: var(--ok-border);
+  }
+
+  .card-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--text-primary);
+  }
+
+  .done-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+
+  .done-toggle:hover {
+    border-color: var(--border-strong);
+  }
+
+  .doc-card.is-done .done-toggle {
+    background-color: var(--ok-bg);
+    border-color: var(--ok-border);
+    color: var(--ok-text);
+  }
+
+  .card-body p {
+    margin: 0 0 14px 0;
+    color: var(--text-secondary);
+  }
+
+  .card-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .card-body ol,
+  .card-body ul {
+    margin: 0 0 18px 0;
+    padding-left: 24px;
+    color: var(--text-secondary);
+  }
+
+  .card-body li {
+    margin-bottom: 12px;
+  }
+
+  .card-body li:last-child {
+    margin-bottom: 0;
+  }
+
+  .card-body ul ul,
+  .card-body ol ul {
+    margin-top: 8px;
+    margin-bottom: 4px;
+  }
+
+  .card-body strong {
+    color: var(--text-primary);
+  }
+
+  /* UI Breadcrumb Badges */
+  .ui-path {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    vertical-align: baseline;
+    margin: 0 2px;
+  }
+
+  .ui-btn {
+    display: inline-block;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.4;
+    padding: 2px 9px;
+    border-radius: 6px;
+    background-color: var(--ui-chip-bg);
+    border: 1px solid var(--ui-chip-border);
+    color: var(--ui-chip-text);
+  }
+
+  .ui-sep {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  /* Verification Callout */
+  .verify-callout {
+    margin-top: 22px;
+    background-color: var(--ok-bg);
+    border: 1px solid var(--ok-border);
+    border-left: 4px solid var(--ok-accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--text-primary);
+  }
+
+  .verify-label {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ok-text);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--ok-border);
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    vertical-align: 1px;
+  }
+
+  /* Security / Note Callout */
+  .note-callout {
+    margin-top: 20px;
+    background-color: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-left: 4px solid var(--warn-accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+  }
+
+  .note-callout strong {
+    color: var(--warn-text);
+  }
+
+  /* Responsive Config Table */
+  .table-wrap {
+    margin: 18px 0 6px 0;
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    min-width: 500px;
+  }
+
+  thead th {
+    background-color: var(--bg-surface-subtle);
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 13.5px;
+    text-align: left;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  tbody td {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    vertical-align: top;
+    line-height: 1.7;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody td:first-child {
+    width: 36%;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Accordion (details / summary) */
+  details.acc {
+    margin-top: 18px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface-subtle);
+    overflow: hidden;
+  }
+
+  details.acc + details.acc {
+    margin-top: 12px;
+  }
+
+  details.acc summary {
+    padding: 14px 18px;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    user-select: none;
+  }
+
+  details.acc summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details.acc summary::after {
+    content: "+";
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  details.acc[open] summary::after {
+    content: "−";
+  }
+
+  .acc-body {
+    padding: 16px 18px 18px 18px;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+  }
+
+  /* ==========================================================================
+     6. Optional Slide-in Memo & Copy Helper Drawer (Hidden by Default)
+     ========================================================================== */
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+  }
+
+  .drawer-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .memo-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 400px;
+    max-width: 100vw;
+    background-color: var(--bg-canvas);
+    border-left: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-drawer);
+    transform: translateX(100%);
+    transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .memo-drawer.is-open {
+    transform: translateX(0);
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    background-color: var(--bg-sidebar);
+    flex-shrink: 0;
+  }
+
+  .drawer-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 28px 20px;
+  }
+
+  .privacy-box {
+    background-color: var(--ok-bg);
+    border: 1px solid var(--ok-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    margin-bottom: 22px;
+  }
+
+  .privacy-box strong {
+    color: var(--ok-text);
+  }
+
+  .memo-field {
+    margin-bottom: 18px;
+  }
+
+  .memo-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+
+  .memo-label-row label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .memo-status {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ok-text);
+  }
+
+  .memo-status.is-warn {
+    color: var(--warn-text);
+  }
+
+  .memo-input-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .memo-input,
+  .memo-select {
+    width: 100%;
+    min-width: 0;
+    padding: 9px 11px;
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+  }
+
+  .memo-select {
+    font-family: var(--font-sans);
+  }
+
+  .memo-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.75;
+  }
+
+  .memo-hint {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .port-chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .port-chip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .port-chip.is-active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background-color: var(--accent-soft);
+    font-weight: 700;
+  }
+
+  .drawer-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--bg-sidebar);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background-color: var(--text-primary);
+    color: var(--bg-canvas);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 80;
+    white-space: nowrap;
+  }
+
+  .toast.is-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ==========================================================================
+     7. Responsive Layout (Mobile & Tablet < 960px)
+     ========================================================================== */
+  @media (max-width: 960px) {
+    .sidebar {
+      position: sticky;
+      top: var(--header-h);
+      width: 100%;
+      height: auto;
+      bottom: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      overflow: visible;
+    }
+
+    .mobile-nav-toggle {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .sidebar-inner {
+      display: none;
+      margin-top: 14px;
+      max-height: 62vh;
+      overflow-y: auto;
+    }
+
+    .sidebar.is-mobile-open .sidebar-inner {
+      display: block;
+    }
+
+    .main-content {
+      margin-left: 0;
+      padding: 32px 20px 80px 20px;
+    }
+
+    .doc-hero h1 {
+      font-size: 23px;
+    }
+
+    .doc-card {
+      padding: 22px 20px;
+    }
+
+    .card-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .app-header {
+      padding: 0 14px;
+    }
+    .brand-tag {
+      display: none;
+    }
+    .btn-label-hide-sm {
+      display: none;
+    }
+  }
+
+  /* ==========================================================================
+     8. Print Stylesheet (Pure Generic Manual Only, No Personal Memo Data)
+     ========================================================================== */
+  @media print {
+    html, body {
+      background: #ffffff !important;
+      color: #000000 !important;
+      font-size: 10.5pt;
+      line-height: 1.6;
+    }
+
+    .app-header,
+    .sidebar,
+    .drawer-backdrop,
+    .memo-drawer,
+    .done-toggle,
+    .toast {
+      display: none !important;
+    }
+
+    .layout-shell {
+      padding-top: 0 !important;
+    }
+
+    .main-content {
+      margin-left: 0 !important;
+      padding: 0 !important;
+    }
+
+    .doc-container {
+      max-width: 100% !important;
+    }
+
+    .doc-hero {
+      border-bottom: 2px solid #000000 !important;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+    }
+
+    .major-section {
+      margin-bottom: 24px !important;
+    }
+
+    .doc-card {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: none !important;
+      padding: 16px 18px !important;
+      margin-bottom: 14px !important;
+      break-inside: avoid;
+    }
+
+    .doc-hero h1,
+    .major-heading,
+    .card-title,
+    .card-body strong,
+    thead th,
+    tbody td:first-child {
+      color: #000000 !important;
+    }
+
+    .doc-lead,
+    .section-intro,
+    .card-body p,
+    .card-body li,
+    tbody td,
+    .acc-body {
+      color: #1f2937 !important;
+    }
+
+    .step-badge,
+    .major-num,
+    .ui-btn,
+    code,
+    .meta-pill,
+    .verify-label {
+      background: #f3f4f6 !important;
+      color: #000000 !important;
+      border: 1px solid #9ca3af !important;
+    }
+
+    .verify-callout,
+    .note-callout {
+      background: #f9fafb !important;
+      border: 1px solid #9ca3af !important;
+      border-left: 4px solid #374151 !important;
+      color: #000000 !important;
+    }
+
+    .note-callout strong {
+      color: #000000 !important;
+    }
+
+    details.acc {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    details.acc summary {
+      color: #000000 !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 固定トップヘッダー -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="brand-tag">EPSON PX-M887F</span>
+      <span class="brand-title">スキャン to メール 設定マニュアル</span>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-accent" id="btnOpenDrawer" aria-expanded="false" aria-controls="memoDrawer">
+        <span>📝</span><span>設定メモを開く</span>
+      </button>
+      <button type="button" class="btn" id="btnTheme" title="ダークモード・ライトモード切替">
+        <span id="themeIcon">🌙</span><span class="btn-label-hide-sm" id="themeLabel">ダーク</span>
+      </button>
+      <button type="button" class="btn" id="btnPrint" title="手順ドキュメントを印刷またはPDF保存">
+        <span>🖨</span><span class="btn-label-hide-sm">印刷 / PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout-shell">
+    <!-- 左サイドバー：全体マップ＆進捗（狭い画面では上部折りたたみ目次） -->
+    <aside class="sidebar" id="sidebar" aria-label="全体の流れと進捗">
+      <button type="button" class="mobile-nav-toggle" id="btnMobileNav" aria-expanded="false">
+        <span>目次・進捗（<span id="mobileProgressText">0 / 5</span> 完了）</span>
+        <span id="mobileNavArrow">▼</span>
+      </button>
+
+      <div class="sidebar-inner">
+        <div class="progress-card">
+          <div class="progress-header">
+            <span>設定ステップ進捗</span>
+            <span class="progress-count" id="progressText">0 / 5 完了</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <div class="nav-group-label">事前確認・リファレンス</div>
+        <ul class="nav-list">
+          <li class="nav-item" data-target="sec-prep">
+            <a class="nav-link" href="#sec-prep"><span class="nav-num">1.</span><span>事前に確認・準備するもの</span></a>
+          </li>
+          <li class="nav-item" data-target="sec-table">
+            <a class="nav-link" href="#sec-table"><span class="nav-num">2.</span><span>Web Config 設定値一覧</span></a>
+          </li>
+        </ul>
+
+        <div class="nav-group-label">設定手順（Step 1〜5）</div>
+        <ul class="nav-list">
+          <li class="nav-item" data-target="step-1">
+            <input type="checkbox" class="nav-check" data-step="step-1" aria-label="Step 1を完了にする">
+            <a class="nav-link" href="#step-1"><span class="nav-num">S1</span><span>Web Config 管理者ログオン</span></a>
+          </li>
+          <li class="nav-item" data-target="step-2">
+            <input type="checkbox" class="nav-check" data-step="step-2" aria-label="Step 2を完了にする">
+            <a class="nav-link" href="#step-2"><span class="nav-num">S2</span><span>メールサーバー情報を登録</span></a>
+          </li>
+          <li class="nav-item" data-target="step-3">
+            <input type="checkbox" class="nav-check" data-step="step-3" aria-label="Step 3を完了にする">
+            <a class="nav-link" href="#step-3"><span class="nav-num">S3</span><span>接続確認を実行する</span></a>
+          </li>
+          <li class="nav-item" data-target="step-4">
+            <input type="checkbox" class="nav-check" data-step="step-4" aria-label="Step 4を完了にする">
+            <a class="nav-link" href="#step-4"><span class="nav-num">S4</span><span>送り先を連絡先に登録</span></a>
+          </li>
+          <li class="nav-item" data-target="step-5">
+            <input type="checkbox" class="nav-check" data-step="step-5" aria-label="Step 5を完了にする">
+            <a class="nav-link" href="#step-5"><span class="nav-num">S5</span><span>本体からテスト送信</span></a>
+          </li>
+        </ul>
+
+        <div class="nav-group-label">補足・まとめ</div>
+        <ul class="nav-list">
+          <li class="nav-item" data-target="sec-trouble">
+            <a class="nav-link" href="#sec-trouble"><span class="nav-num">4.</span><span>つまずきやすいポイント</span></a>
+          </li>
+          <li class="nav-item" data-target="sec-summary">
+            <a class="nav-link" href="#sec-summary"><span class="nav-num">5.</span><span>まとめ＆安全運用</span></a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- 右メインエリア：縦長の手順ドキュメント -->
+    <main class="main-content">
+      <article class="doc-container">
+        <!-- タイトル・導入 -->
+        <header class="doc-hero">
+          <span class="doc-eyebrow">汎用設定ガイド ／ オフライン対応</span>
+          <h1>EPSON PX-M887F「スキャン to メール」設定マニュアル</h1>
+          <p class="doc-lead">
+            紙をセットしてタッチパネルを数回タップするだけで、パソコンを介さず指定のメールアドレスへ PDF を直接送信できるようにする手順ガイドです。事前に何も分からない状態から、確認すべき情報の調べ方と管理画面（Web Config）の設定手順を順番にまとめています。
+          </p>
+          <div class="hero-meta">
+            <span class="meta-pill">対象機種：EPSON PX-M887F</span>
+            <span class="meta-pill">設定場所：ブラウザー（Web Config）</span>
+            <span class="meta-pill">所要時間目安：10〜15分</span>
+          </div>
+        </header>
+
+        <!-- セクション1：事前に確認・準備するもの -->
+        <section class="major-section" id="sec-prep" data-spy-section="sec-prep">
+          <h2 class="major-heading"><span class="major-num">1</span>事前に確認・準備するもの</h2>
+          <p class="section-intro">
+            設定を始める前に、以下の3点を手元に控えておきます。右上の「設定メモを開く」を使うと、調べた値を一時メモしてワンクリックでコピーできます（外部送信やブラウザ保存は一切行いません）。
+          </p>
+
+          <div class="doc-card">
+            <div class="card-body">
+              <ol>
+                <li>
+                  <strong>プリンターのIPアドレス</strong><br>
+                  プリンター本体のタッチパネルで
+                  <span class="ui-path"><span class="ui-btn">設定</span><span class="ui-sep">＞</span><span class="ui-btn">ネットワーク設定</span><span class="ui-sep">＞</span><span class="ui-btn">ネットワークステータス</span></span>
+                  を開き、IPv4 の IPアドレス（例：<code>192.168.x.x</code>）を確認します。
+                </li>
+                <li>
+                  <strong>初期管理者パスワード（製造番号）</strong><br>
+                  プリンター本体（背面や側面など）に貼られているシールに記載された<strong>10桁の製造番号（半角英数字・英字は大文字）</strong>を確認します。<br>
+                  ※両端の <code>*</code>（アスタリスク）は含めません。すでに管理者パスワードを変更している場合は、変更後のパスワードを用意します。
+                </li>
+                <li>
+                  <strong>送信元メールのサーバー情報（SMTP情報）</strong><br>
+                  普段使っているメールソフトや契約プロバイダーの設定資料から、以下の4点を確認します。
+                  <ul>
+                    <li><strong>SMTPサーバーアドレス</strong>（送信メールサーバー名）</li>
+                    <li><strong>ポート番号</strong>（例：<code>587</code>、<code>465</code>、<code>25</code> など）</li>
+                    <li><strong>暗号化方式</strong>（<code>なし</code> / <code>STARTTLS</code> / <code>SSL/TLS</code>）</li>
+                    <li><strong>認証用ユーザー名（メールアドレス）</strong> と <strong>メールパスワード</strong></li>
+                  </ul>
+                </li>
+              </ol>
+
+              <details class="acc">
+                <summary>補足：Outlook（クラシック）でSMTP情報を確認する方法</summary>
+                <div class="acc-body">
+                  <p>Outlook 上部のメニューから以下の順に開きます。</p>
+                  <p>
+                    <span class="ui-path"><span class="ui-btn">ファイル</span><span class="ui-sep">＞</span><span class="ui-btn">アカウント設定</span><span class="ui-sep">＞</span><span class="ui-btn">サーバーの設定</span></span>
+                    をクリックし、画面内の <span class="ui-btn">送信メール ∨</span> を展開します。
+                  </p>
+                  <p>表示された「サーバー名」「ポート」「暗号化方法」「認証の有無」を控え、既存の設定が変わらないよう <strong>［×］で閉じて</strong>ください。</p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <!-- セクション2：Web Config 設定値一覧 -->
+        <section class="major-section" id="sec-table" data-spy-section="sec-table">
+          <h2 class="major-heading"><span class="major-num">2</span>Web Config 設定値一覧</h2>
+          <p class="section-intro">
+            Step 2 で管理画面の
+            <span class="ui-path"><span class="ui-btn">ネットワーク</span><span class="ui-sep">＞</span><span class="ui-btn">メールサーバー</span><span class="ui-sep">＞</span><span class="ui-btn">基本</span></span>
+            に入力する項目の一覧です。ご自身のメール環境に合わせて、すべて半角で入力します。
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Web Config の設定項目</th>
+                  <th>入力・選択する内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>認証方式</td>
+                  <td>メールサーバーの指定方式（例：<code>SMTP-AUTH</code>）</td>
+                </tr>
+                <tr>
+                  <td>認証用ユーザー名</td>
+                  <td>送信に使うメールアドレス</td>
+                </tr>
+                <tr>
+                  <td>認証用パスワード</td>
+                  <td>上記メールアドレスのメールパスワード</td>
+                </tr>
+                <tr>
+                  <td>送信元アドレス</td>
+                  <td>プリンターからの送信元となるメールアドレス</td>
+                </tr>
+                <tr>
+                  <td>SMTPサーバーアドレス</td>
+                  <td>確認した送信メールサーバー名（例：<code>smtp.example.com</code>）</td>
+                </tr>
+                <tr>
+                  <td>SMTPサーバーポート番号</td>
+                  <td>確認したポート番号（例：<code>587</code> や <code>465</code>）</td>
+                </tr>
+                <tr>
+                  <td>セキュア接続</td>
+                  <td>確認した暗号化方式（<code>なし</code> / <code>STARTTLS</code> / <code>SSL/TLS</code>）</td>
+                </tr>
+                <tr>
+                  <td>証明書の検証</td>
+                  <td>セキュア接続が「なし」の場合は <strong>無効</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- セクション3：設定手順（Step 1〜5） -->
+        <section class="major-section" id="sec-steps">
+          <h2 class="major-heading"><span class="major-num">3</span>設定手順（Step 1〜5）</h2>
+          <p class="section-intro">
+            上から順番に進めます。各ステップが完了したら右上の「完了にする」ボタンを押すと、左側の進捗バーに反映されます。
+          </p>
+
+          <!-- Step 1 -->
+          <div class="doc-card" id="step-1" data-spy-section="step-1">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">Step 1</span>
+                <h3 class="card-title">Web Config に管理者ログオンする</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-1">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <ol>
+                <li>パソコンのブラウザーを開き、アドレスバーに控えておいた<strong>プリンターのIPアドレス</strong>（例：<code>192.168.x.x</code>）を入力してアクセスします。</li>
+                <li>画面右上の <span class="ui-btn">管理者ログオン</span> をクリックします。</li>
+                <li>ユーザー名欄は<strong>空欄のまま</strong>、パスワード欄に<strong>10桁の製造番号（半角大文字）</strong>を入力して <span class="ui-btn">確認</span> をクリックします。</li>
+              </ol>
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>画面上部のメニューに <span class="ui-btn">スキャン/コピー</span> や <span class="ui-btn">ネットワーク</span> などの管理タブが表示されればログオン完了です。
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="doc-card" id="step-2" data-spy-section="step-2">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">Step 2</span>
+                <h3 class="card-title">メールサーバー情報を登録する</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-2">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <ol>
+                <li>
+                  画面上部のタブと左メニューから
+                  <span class="ui-path"><span class="ui-btn">ネットワーク</span><span class="ui-sep">＞</span><span class="ui-btn">メールサーバー</span><span class="ui-sep">＞</span><span class="ui-btn">基本</span></span>
+                  を開きます。
+                </li>
+                <li>「2. Web Config 設定値一覧」の項目を<strong>すべて半角で</strong>入力・選択し、画面下の <span class="ui-btn">設定</span> をクリックします。</li>
+              </ol>
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>「設定が完了しました」というメッセージが表示されれば保存完了です。
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="doc-card" id="step-3" data-spy-section="step-3">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">Step 3</span>
+                <h3 class="card-title">接続確認を実行する</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-3">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <ol>
+                <li>
+                  左メニューから
+                  <span class="ui-path"><span class="ui-btn">メールサーバー</span><span class="ui-sep">＞</span><span class="ui-btn">接続確認</span></span>
+                  を開きます。
+                </li>
+                <li>画面内の <span class="ui-btn">開始</span> ボタンをクリックして通信テストを実行します。</li>
+              </ol>
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>「接続確認に成功しました」と表示されれば、メールサーバーとの通信・認証設定は完了です。
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="doc-card" id="step-4" data-spy-section="step-4">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">Step 4</span>
+                <h3 class="card-title">送り先を連絡先（アドレス帳）に登録する</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-4">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <ol>
+                <li>
+                  画面上部のタブと左メニューから
+                  <span class="ui-path"><span class="ui-btn">スキャン/コピー</span><span class="ui-sep">＞</span><span class="ui-btn">連絡先</span></span>
+                  を開きます。
+                </li>
+                <li>まだ登録されていない空きの番号を選び、<span class="ui-btn">登録/編集</span> をクリックします。</li>
+                <li>
+                  以下を入力・選択して画面下の <span class="ui-btn">適用</span>（または <span class="ui-btn">設定</span>）で保存します。
+                  <ul>
+                    <li><strong>種別：</strong><code>メール</code> を選択</li>
+                    <li><strong>名前：</strong>プリンター画面に表示したい宛先名</li>
+                    <li><strong>メールアドレス：</strong>スキャンデータの送り先アドレス</li>
+                    <li><strong>常用指定：</strong>チェックを入れると本体の宛先一覧の先頭に表示されて便利です</li>
+                    <li><strong>SIP URI：</strong><strong>空欄のまま</strong>（IPファクス専用項目のため不要）</li>
+                  </ul>
+                </li>
+              </ol>
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>連絡先一覧に戻り、登録した名前とメールアドレスが表示されていれば登録完了です。
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="doc-card" id="step-5" data-spy-section="step-5">
+            <div class="card-head">
+              <div class="card-title-wrap">
+                <span class="step-badge">Step 5</span>
+                <h3 class="card-title">プリンター本体からテスト送信する</h3>
+              </div>
+              <button type="button" class="done-toggle" data-toggle-step="step-5">☐ 完了にする</button>
+            </div>
+            <div class="card-body">
+              <ol>
+                <li>テスト用の原稿を1枚セットします。</li>
+                <li>
+                  PX-M887F 本体のタッチパネルで
+                  <span class="ui-path"><span class="ui-btn">スキャン</span><span class="ui-sep">＞</span><span class="ui-btn">メール</span></span>
+                  を開きます。
+                </li>
+                <li>Step 4 で登録した宛先を選択し、スキャンを実行します。</li>
+              </ol>
+              <div class="verify-callout">
+                <span class="verify-label">確認ポイント</span>数十秒〜1分ほどで、指定したメールアドレス宛に PDF などのスキャンデータが添付されたメールが届けばすべての設定が完了です。
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- セクション4：つまずきやすいポイント（Q&A折りたたみ） -->
+        <section class="major-section" id="sec-trouble" data-spy-section="sec-trouble">
+          <h2 class="major-heading"><span class="major-num">4</span>つまずきやすいポイント（Q&amp;A）</h2>
+          <p class="section-intro">
+            エラーが出た場合や迷いやすい項目をまとめました。該当する見出しをクリックして確認してください。
+          </p>
+
+          <details class="acc">
+            <summary>「SMTPサーバーアドレスが正しくありません」とエラーが出る場合</summary>
+            <div class="acc-body">
+              <p>入力欄の前後に見えないスペース（空白）や全角文字、余計な記号（<code>/</code> や <code>http://</code> など）が混ざっているとエラーになります。</p>
+              <p>入力欄を一度 <code>Ctrl + A</code> → <code>Delete</code> で完全に空にしてから、半角英数字とピリオドのみで入れ直してください。右上の「設定メモ」を使うと、余計な文字を自動で取り除いてコピーできます。</p>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>Microsoft 365 や Google Workspace のアカウントを使う場合</summary>
+            <div class="acc-body">
+              <p>通常のログインパスワードのままでは、セキュリティ仕様により接続確認で認証エラーになる場合があります。</p>
+              <p>利用しているサービスの管理画面で「SMTP AUTH（認証済みSMTP）」を有効化するか、2段階認証を有効にしたうえで発行する「アプリパスワード」を認証用パスワード欄に入力してください。</p>
+            </div>
+          </details>
+        </section>
+
+        <!-- セクション5：まとめ＆安全運用のポイント -->
+        <section class="major-section" id="sec-summary" data-spy-section="sec-summary">
+          <h2 class="major-heading"><span class="major-num">5</span>まとめ＆安全運用のポイント</h2>
+          <div class="doc-card">
+            <div class="card-body">
+              <p>一度「スキャン to メール」を設定しておくと、紙の書類をデータ化して共有する手間が大きく減ります。今後の再設定や別機器への設定では、次の3点を押さえておくとスムーズです。</p>
+              <ul>
+                <li><strong>管理画面（Web Config）の初期パスワード</strong>は、本体シールに記載された10桁の製造番号（半角大文字・両端の <code>*</code> 不要）</li>
+                <li><strong>SMTPサーバーの入力</strong>は、見えないスペースや全角文字が入らないよう半角のみで入力する</li>
+                <li><strong>アドレス帳登録</strong>では、「常用指定」にチェックを入れておくと本体画面の先頭に表示されて便利</li>
+              </ul>
+
+              <div class="note-callout">
+                <strong>安全運用の推奨ポイント：</strong>初期の管理者パスワード（製造番号）は本体シールを見れば確認できるため、職場のセキュリティポリシーや設置環境（来客・外部業者の出入りがある場合など）に応じて、Web Config の管理者パスワードを任意のパスワードへ変更しておくとより安全に運用できます。また、メールパスワードを変更した際は Web Config 側の認証用パスワードもあわせて更新してください。
+              </div>
+            </div>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+
+  <!-- 右側スライドイン：任意の設定メモ＆コピペ補助ドロワー -->
+  <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true"></div>
+  <aside class="memo-drawer" id="memoDrawer" aria-label="設定メモとコピペ補助" aria-hidden="true">
+    <div class="drawer-header">
+      <h2>📝 設定メモ＆コピペ補助</h2>
+      <button type="button" class="btn btn-sm" id="btnCloseDrawer" aria-label="設定メモを閉じる">✕ 閉じる</button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="privacy-box">
+        <strong>🔒 完全ローカル・一時メモリ設計：</strong>外部通信は CSP で遮断されており、Cookie や localStorage 等への保存も一切行いません。ページを閉じるか下の「入力をすべて消去」を押すと全項目が即座に消去されます。
+      </div>
+
+      <div class="memo-field">
+        <div class="memo-label-row">
+          <label for="memoIp">プリンターのIPアドレス</label>
+          <span class="memo-status" id="stIp"></span>
+        </div>
+        <div class="memo-input-row">
+          <input type="text" id="memoIp" class="memo-input" placeholder="例: 192.168.1.50" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
+          <button type="button" class="btn btn-sm" data-copy="memoIp">コピー</button>
+        </div>
+        <div class="memo-hint">
+          <a href="#" id="linkWebConfig" target="_blank" rel="noopener noreferrer" style="display:none;">↗ ブラウザで Web Config を開く</a>
+          <span id="hintWebConfig">IPv4アドレスを入力すると管理画面へのリンクが表示されます。</span>
+        </div>
+      </div>
+
+      <div class="memo-field">
+        <div class="memo-label-row">
+          <label for="memoSerial">製造番号（10桁・初期パスワード）</label>
+          <span class="memo-status" id="stSerial"></span>
+        </div>
+        <div class="memo-input-row">
+          <input type="text" id="memoSerial" class="memo-input" placeholder="例: ABCD123456" maxlength="14" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
+          <button type="button" class="btn btn-sm" data-copy="memoSerial">コピー</button>
+        </div>
+        <div class="memo-hint">両端の <code>*</code> や小文字を含めても自動で「半角大文字10桁」に整形します。</div>
+      </div>
+
+      <div class="memo-field">
+        <div class="memo-label-row">
+          <label for="memoEmail">送信元メールアドレス</label>
+        </div>
+        <div class="memo-input-row">
+          <input type="text" id="memoEmail" class="memo-input" placeholder="例: user@example.com" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
+          <button type="button" class="btn btn-sm" data-copy="memoEmail">コピー</button>
+        </div>
+        <div class="memo-hint">前後の空白・全角を自動除去します（認証用ユーザー名・送信元・宛先用）。</div>
+      </div>
+
+      <div class="memo-field">
+        <div class="memo-label-row">
+          <label for="memoPass">メールパスワード</label>
+        </div>
+        <div class="memo-input-row">
+          <input type="password" id="memoPass" class="memo-input" placeholder="メールパスワードを入力" autocomplete="new-password" spellcheck="false" autocorrect="off" autocapitalize="off">
+          <button type="button" class="btn btn-sm" id="btnTogglePass" aria-label="パスワードの表示切替">表示</button>
+          <button type="button" class="btn btn-sm" data-copy="memoPass">コピー</button>
+        </div>
+        <div class="memo-hint">伏せ字のままコピーできます。入力はメモリ上にのみ保持されます。</div>
+      </div>
+
+      <div class="memo-field">
+        <div class="memo-label-row">
+          <label for="memoSmtp">SMTPサーバーアドレス</label>
+          <span class="memo-status" id="stSmtp"></span>
+        </div>
+        <div class="memo-input-row">
+          <input type="text" id="memoSmtp" class="memo-input" placeholder="例: smtp.example.com" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
+          <button type="button" class="btn btn-sm" data-copy="memoSmtp">コピー</button>
+        </div>
+        <div class="memo-hint">空白・全角・<code>http://</code>・<code>/</code> を自動除去して半角小文字に整形します。</div>
+      </div>
+
+      <div class="memo-field">
+        <div class="memo-label-row">
+          <label for="memoPort">ポート番号</label>
+        </div>
+        <div class="memo-input-row">
+          <input type="text" id="memoPort" class="memo-input" value="587" maxlength="5" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
+          <button type="button" class="btn btn-sm" data-copy="memoPort">コピー</button>
+        </div>
+        <div class="port-chips" id="portChips">
+          <button type="button" class="port-chip is-active" data-port="587">587</button>
+          <button type="button" class="port-chip" data-port="465">465</button>
+          <button type="button" class="port-chip" data-port="25">25</button>
+        </div>
+      </div>
+
+      <div class="memo-field">
+        <div class="memo-label-row">
+          <label for="memoSecure">セキュア接続</label>
+        </div>
+        <div class="memo-input-row">
+          <select id="memoSecure" class="memo-select" autocomplete="off">
+            <option value="なし">なし</option>
+            <option value="STARTTLS">STARTTLS</option>
+            <option value="SSL/TLS">SSL/TLS</option>
+          </select>
+          <button type="button" class="btn btn-sm" data-copy="memoSecure">コピー</button>
+        </div>
+        <div class="memo-hint">「なし」の場合は Web Config の「証明書の検証」を <strong>無効</strong> にします。</div>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <button type="button" class="btn btn-sm btn-danger" id="btnClearMemo">入力をすべて消去</button>
+      <button type="button" class="btn btn-sm" id="btnDoneDrawer">閉じる</button>
+    </div>
+  </aside>
+
+  <!-- トースト通知 -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ==========================================================================
+     1. In-memory State (Cookie / localStorage / sessionStorage 一切不使用)
+     ========================================================================== */
+  const STEP_IDS = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+  const completedSteps = new Set();
+
+  /* ==========================================================================
+     2. DOM References (XSS防止のため DOM 更新は textContent と value のみ使用)
+     ========================================================================== */
+  const sidebar = document.getElementById('sidebar');
+  const btnMobileNav = document.getElementById('btnMobileNav');
+  const mobileNavArrow = document.getElementById('mobileNavArrow');
+  const mobileProgressText = document.getElementById('mobileProgressText');
+  const progressText = document.getElementById('progressText');
+  const progressFill = document.getElementById('progressFill');
+
+  const btnTheme = document.getElementById('btnTheme');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+  const btnPrint = document.getElementById('btnPrint');
+
+  const btnOpenDrawer = document.getElementById('btnOpenDrawer');
+  const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+  const btnDoneDrawer = document.getElementById('btnDoneDrawer');
+  const drawerBackdrop = document.getElementById('drawerBackdrop');
+  const memoDrawer = document.getElementById('memoDrawer');
+
+  const memoIp = document.getElementById('memoIp');
+  const memoSerial = document.getElementById('memoSerial');
+  const memoEmail = document.getElementById('memoEmail');
+  const memoPass = document.getElementById('memoPass');
+  const btnTogglePass = document.getElementById('btnTogglePass');
+  const memoSmtp = document.getElementById('memoSmtp');
+  const memoPort = document.getElementById('memoPort');
+  const memoSecure = document.getElementById('memoSecure');
+
+  const stIp = document.getElementById('stIp');
+  const stSerial = document.getElementById('stSerial');
+  const stSmtp = document.getElementById('stSmtp');
+  const linkWebConfig = document.getElementById('linkWebConfig');
+  const hintWebConfig = document.getElementById('hintWebConfig');
+  const btnClearMemo = document.getElementById('btnClearMemo');
+  const toastEl = document.getElementById('toast');
+
+  let toastTimer = null;
+
+  function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('is-show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove('is-show');
+    }, 2000);
+  }
+
+  /* ==========================================================================
+     3. Progress Bar & Step Checkbox Synchronization
+     ========================================================================== */
+  function updateProgressUI() {
+    const done = completedSteps.size;
+    const total = STEP_IDS.length;
+    const pct = Math.round((done / total) * 100);
+
+    progressText.textContent = done + ' / ' + total + ' 完了';
+    progressText.classList.toggle('is-all-done', done === total);
+    mobileProgressText.textContent = done + ' / ' + total;
+    progressFill.style.width = pct + '%';
+
+    STEP_IDS.forEach(function (id) {
+      const isDone = completedSteps.has(id);
+
+      const navCheck = document.querySelector('.nav-check[data-step="' + id + '"]');
+      if (navCheck) {
+        navCheck.checked = isDone;
+        const navItem = navCheck.closest('.nav-item');
+        if (navItem) navItem.classList.toggle('is-checked', isDone);
+      }
+
+      const cardEl = document.getElementById(id);
+      if (cardEl) {
+        cardEl.classList.toggle('is-done', isDone);
+        const toggleBtn = cardEl.querySelector('.done-toggle[data-toggle-step="' + id + '"]');
+        if (toggleBtn) {
+          toggleBtn.textContent = isDone ? '☑ 完了済み' : '☐ 完了にする';
+        }
+      }
+    });
+  }
+
+  function setStepDone(stepId, isDone) {
+    if (isDone) {
+      completedSteps.add(stepId);
+    } else {
+      completedSteps.delete(stepId);
+    }
+    updateProgressUI();
+  }
+
+  document.querySelectorAll('.nav-check').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      setStepDone(cb.getAttribute('data-step'), cb.checked);
+    });
+  });
+
+  document.querySelectorAll('.done-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const id = btn.getAttribute('data-toggle-step');
+      const nextState = !completedSteps.has(id);
+      setStepDone(id, nextState);
+      if (nextState) {
+        showToast('ステップを完了にしました');
+      }
+    });
+  });
+
+  /* ==========================================================================
+     4. ScrollSpy for Left Navigation Map
+     ========================================================================== */
+  const spyTargets = Array.from(document.querySelectorAll('[data-spy-section]'));
+  const navItems = Array.from(document.querySelectorAll('.nav-item[data-target]'));
+
+  function setActiveNav(targetId) {
+    navItems.forEach(function (item) {
+      item.classList.toggle('is-active', item.getAttribute('data-target') === targetId);
+    });
+  }
+
+  function updateScrollSpy() {
+    const offset = 140;
+    let currentId = spyTargets[0] ? spyTargets[0].getAttribute('data-spy-section') : '';
+
+    for (let i = 0; i < spyTargets.length; i++) {
+      const rect = spyTargets[i].getBoundingClientRect();
+      if (rect.top <= offset) {
+        currentId = spyTargets[i].getAttribute('data-spy-section');
+      } else {
+        break;
+      }
+    }
+
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 24) {
+      const last = spyTargets[spyTargets.length - 1];
+      if (last) currentId = last.getAttribute('data-spy-section');
+    }
+
+    if (currentId) setActiveNav(currentId);
+  }
+
+  let spyTicking = false;
+  window.addEventListener('scroll', function () {
+    if (!spyTicking) {
+      window.requestAnimationFrame(function () {
+        updateScrollSpy();
+        spyTicking = false;
+      });
+      spyTicking = true;
+    }
+  }, { passive: true });
+
+  // モバイル目次：リンククリックで自動的に閉じる
+  document.querySelectorAll('.nav-link').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (sidebar.classList.contains('is-mobile-open')) {
+        sidebar.classList.remove('is-mobile-open');
+        btnMobileNav.setAttribute('aria-expanded', 'false');
+        mobileNavArrow.textContent = '▼';
+      }
+    });
+  });
+
+  btnMobileNav.addEventListener('click', function () {
+    const isOpen = sidebar.classList.toggle('is-mobile-open');
+    btnMobileNav.setAttribute('aria-expanded', String(isOpen));
+    mobileNavArrow.textContent = isOpen ? '▲' : '▼';
+  });
+
+  /* ==========================================================================
+     5. Theme Toggle (Light Default / Dark Optional) & Print
+     ========================================================================== */
+  btnTheme.addEventListener('click', function () {
+    const root = document.documentElement;
+    const isLight = root.getAttribute('data-theme') !== 'dark';
+    root.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    themeIcon.textContent = isLight ? '☀' : '🌙';
+    themeLabel.textContent = isLight ? 'ライト' : 'ダーク';
+  });
+
+  btnPrint.addEventListener('click', function () {
+    window.print();
+  });
+
+  /* ==========================================================================
+     6. Slide-in Memo Drawer, Input Sanitizers & Safe Clipboard Copy
+     ========================================================================== */
+  function openDrawer() {
+    memoDrawer.classList.add('is-open');
+    drawerBackdrop.classList.add('is-open');
+    memoDrawer.setAttribute('aria-hidden', 'false');
+    drawerBackdrop.setAttribute('aria-hidden', 'false');
+    btnOpenDrawer.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeDrawer() {
+    memoDrawer.classList.remove('is-open');
+    drawerBackdrop.classList.remove('is-open');
+    memoDrawer.setAttribute('aria-hidden', 'true');
+    drawerBackdrop.setAttribute('aria-hidden', 'true');
+    btnOpenDrawer.setAttribute('aria-expanded', 'false');
+  }
+
+  btnOpenDrawer.addEventListener('click', openDrawer);
+  btnCloseDrawer.addEventListener('click', closeDrawer);
+  btnDoneDrawer.addEventListener('click', closeDrawer);
+  drawerBackdrop.addEventListener('click', closeDrawer);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && memoDrawer.classList.contains('is-open')) {
+      closeDrawer();
+    }
+  });
+
+  // 全角英数字・記号を半角へ変換
+  function toHalfWidth(str) {
+    return str
+      .replace(/[\uFF01-\uFF5E]/g, function (ch) {
+        return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+      })
+      .replace(/\u3000/g, ' ');
+  }
+
+  function isValidIpv4(ip) {
+    const parts = ip.split('.');
+    if (parts.length !== 4) return false;
+    return parts.every(function (p) {
+      return /^\d{1,3}$/.test(p) && Number(p) >= 0 && Number(p) <= 255;
+    });
+  }
+
+  function isValidHost(host) {
+    return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(host);
+  }
+
+  memoIp.addEventListener('input', function () {
+    const clean = toHalfWidth(memoIp.value).replace(/[^0-9.]/g, '').trim();
+    if (memoIp.value !== clean) memoIp.value = clean;
+
+    if (!clean) {
+      stIp.textContent = '';
+      linkWebConfig.removeAttribute('href');
+      linkWebConfig.style.display = 'none';
+      hintWebConfig.style.display = 'inline';
+    } else if (isValidIpv4(clean)) {
+      stIp.textContent = '✓ IPv4 OK';
+      stIp.className = 'memo-status';
+      linkWebConfig.setAttribute('href', 'http://' + clean + '/');
+      linkWebConfig.style.display = 'inline';
+      hintWebConfig.style.display = 'none';
+    } else {
+      stIp.textContent = '形式確認';
+      stIp.className = 'memo-status is-warn';
+      linkWebConfig.removeAttribute('href');
+      linkWebConfig.style.display = 'none';
+      hintWebConfig.style.display = 'inline';
+    }
+  });
+
+  memoSerial.addEventListener('input', function () {
+    const clean = toHalfWidth(memoSerial.value)
+      .replace(/\*/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .slice(0, 10);
+    if (memoSerial.value !== clean) memoSerial.value = clean;
+
+    if (!clean) {
+      stSerial.textContent = '';
+    } else if (clean.length === 10) {
+      stSerial.textContent = '✓ 10桁 OK';
+      stSerial.className = 'memo-status';
+    } else {
+      stSerial.textContent = clean.length + ' / 10桁';
+      stSerial.className = 'memo-status is-warn';
+    }
+  });
+
+  memoEmail.addEventListener('input', function () {
+    const clean = toHalfWidth(memoEmail.value).replace(/\s+/g, '').trim();
+    if (memoEmail.value !== clean) memoEmail.value = clean;
+  });
+
+  btnTogglePass.addEventListener('click', function () {
+    const isHidden = memoPass.type === 'password';
+    memoPass.type = isHidden ? 'text' : 'password';
+    btnTogglePass.textContent = isHidden ? '隠す' : '表示';
+  });
+
+  memoSmtp.addEventListener('input', function () {
+    const clean = toHalfWidth(memoSmtp.value)
+      .replace(/^https?:\/\//i, '')
+      .replace(/[\/\s]+/g, '')
+      .toLowerCase()
+      .trim();
+    if (memoSmtp.value !== clean) memoSmtp.value = clean;
+
+    if (!clean) {
+      stSmtp.textContent = '';
+    } else if (isValidHost(clean)) {
+      stSmtp.textContent = '✓ 整形済み';
+      stSmtp.className = 'memo-status';
+    } else {
+      stSmtp.textContent = 'ドメイン確認';
+      stSmtp.className = 'memo-status is-warn';
+    }
+  });
+
+  function syncPortChips() {
+    document.querySelectorAll('#portChips .port-chip').forEach(function (chip) {
+      chip.classList.toggle('is-active', chip.getAttribute('data-port') === memoPort.value);
+    });
+  }
+
+  memoPort.addEventListener('input', function () {
+    const clean = toHalfWidth(memoPort.value).replace(/[^0-9]/g, '').slice(0, 5);
+    if (memoPort.value !== clean) memoPort.value = clean;
+    syncPortChips();
+  });
+
+  document.querySelectorAll('#portChips .port-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      memoPort.value = chip.getAttribute('data-port');
+      syncPortChips();
+    });
+  });
+
+  // 安全なクリップボードコピー（iFrame内でも動作する execCommand を使用）
+  function copyFromField(fieldId, triggerBtn) {
+    const target = document.getElementById(fieldId);
+    const val = target ? target.value : '';
+    if (!val) {
+      showToast('コピーする値がまだ入力されていません');
+      return;
+    }
+
+    const temp = document.createElement('textarea');
+    temp.value = val;
+    temp.setAttribute('readonly', '');
+    temp.style.position = 'fixed';
+    temp.style.left = '-9999px';
+    document.body.appendChild(temp);
+    temp.select();
+
+    let copied = false;
+    try {
+      copied = document.execCommand('copy');
+    } catch (err) {
+      copied = false;
+    }
+    document.body.removeChild(temp);
+
+    if (copied) {
+      showToast('クリップボードにコピーしました');
+      const originalText = triggerBtn.textContent;
+      triggerBtn.textContent = '完了!';
+      triggerBtn.classList.add('btn-copied');
+      setTimeout(function () {
+        triggerBtn.textContent = originalText;
+        triggerBtn.classList.remove('btn-copied');
+      }, 1300);
+    } else {
+      showToast('コピーできませんでした。手動でコピーしてください');
+    }
+  }
+
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      copyFromField(btn.getAttribute('data-copy'), btn);
+    });
+  });
+
+  // すべてのメモ入力欄を安全にクリアする関数
+  function clearAllMemoFields() {
+    memoIp.value = '';
+    memoSerial.value = '';
+    memoEmail.value = '';
+    memoPass.value = '';
+    memoPass.type = 'password';
+    btnTogglePass.textContent = '表示';
+    memoSmtp.value = '';
+    memoPort.value = '587';
+    memoSecure.value = 'なし';
+
+    stIp.textContent = '';
+    stSerial.textContent = '';
+    stSmtp.textContent = '';
+    linkWebConfig.removeAttribute('href');
+    linkWebConfig.style.display = 'none';
+    hintWebConfig.style.display = 'inline';
+    syncPortChips();
+  }
+
+  btnClearMemo.addEventListener('click', function () {
+    clearAllMemoFields();
+    showToast('入力をすべて消去しました');
+  });
+
+  // ページ離脱時にメモリ上の入力値を空文字で上書きクリア
+  window.addEventListener('pagehide', function () {
+    clearAllMemoFields();
+  });
+
+  /* ==========================================================================
+     7. Initialize
+     ========================================================================== */
+  updateProgressUI();
+  updateScrollSpy();
+})();
+</script>
+</body>
+</html>
